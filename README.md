@@ -4,7 +4,7 @@ Repository with a bunch of different projects and practices made for the subject
 
 ## Authors
 
-* [Alberto Maillo](https://github.com/################)
+* [Alberto Maillo](https://github.com/AlbertoMaillo)
 * [Ismael Muñoz](https://github.com/buuh-ismis)
 * [María Molina](https://github.com/##################)
 * [Álvaro Orduna](https://github.com/alorle)
