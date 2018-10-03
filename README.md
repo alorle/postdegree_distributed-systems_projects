@@ -6,5 +6,5 @@ Repository with a bunch of different projects and practices made for the subject
 
 * [Alberto Maillo](https://github.com/AlbertoMaillo)
 * [Ismael Muñoz](https://github.com/buuh-ismis)
-* [María Molina](https://github.com/anamolina3)
+* [Ana Molina](https://github.com/anamolina3)
 * [Álvaro Orduna](https://github.com/alorle)
