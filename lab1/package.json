@@ -2,13 +2,16 @@
   "name": "lab1",
   "version": "1.0.0",
   "scripts": {
-    "client": "node client_worker.js",
-    "handle_mid": "node handle_mid.js",
-    "handler": "node handler_worker.js",
-    "replica_mid": "node replica_mid.js"
+    "client": "node client.js",
+    "handler": "node handler.js",
+    "rr_mid": "node rr_mid.js"
   },
   "license": "MIT",
   "dependencies": {
-    "zmq": "^2.15.3"
+    "zeromq": "^5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.6.1",
+    "eslint-config-recommended": "^4.0.0"
   }
 }
