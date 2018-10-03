@@ -1,0 +1,14 @@
+{
+  "name": "lab1",
+  "version": "1.0.0",
+  "scripts": {
+    "client": "node client_worker.js",
+    "handle_mid": "node handle_mid.js",
+    "handler": "node handler_worker.js",
+    "replica_mid": "node replica_mid.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "zmq": "^2.15.3"
+  }
+}
