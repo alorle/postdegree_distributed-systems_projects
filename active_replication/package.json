@@ -1,0 +1,16 @@
+{
+  "name": "lab1",
+  "version": "1.0.0",
+  "scripts": {
+    "client": "node client.js",
+    "client_rr": "node client_rr.js",
+    "client_router": "node client_router.js",
+    "handler": "node handler.js",
+    "handler_router": "node handler_router.js",
+    "replica": "node replica.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "zeromq": "^5.0.0"
+  }
+}
