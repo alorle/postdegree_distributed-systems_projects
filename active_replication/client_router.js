@@ -1,18 +1,19 @@
 const zmq = require('zeromq');
 
 if (process.argv.length != 4) {
-  console.error('Usage: node client_router.js <OUTER_PORT> <INNER_PORT>');
+  console.error('Usage: node client_router.js <CLIENT_SIDE_PORT> <HANDLER_SIDE_PORT>');
   process.exit();
 }
+
 /**
  * ESTADO DEL HANDLER_ROUTER
  */
-const rr_id = 'client_router_outer';
+const rr_id = 'handler_router_rr';
 const rr_host = '*';
 const rr_port = process.argv[2];
 const rr_addr = `tcp://${rr_host}:${rr_port}`;
 
-const handler_id = 'client_router_inner';
+const handler_id = 'handler_router_handler';
 const handler_host = '*';
 const handler_port = process.argv[3];
 const handler_addr = `tcp://${handler_host}:${handler_port}`;
@@ -41,7 +42,7 @@ handler_socket.on('message', (senderId, message) => onHandlerReplay(senderId, JS
  * @param JSON request
  */
 function onClientRequest(senderId, req) {
-  console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${JSON.stringify(req.data)}`);
+  console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${req.data}`);
   handler_socket.send([req.to, handler_socket.identity, JSON.stringify(req)]);
 };
 
@@ -53,7 +54,7 @@ function onClientRequest(senderId, req) {
  * @param JSON request
  */
 function onHandlerReplay(senderId, req) {
-  console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${JSON.stringify(req.data)}`);
+  console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${req.data}`);
   rr_socket.send([req.to, rr_socket.identity, JSON.stringify(req)]);
 };
 

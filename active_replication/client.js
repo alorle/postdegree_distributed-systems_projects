@@ -19,13 +19,13 @@ const rr_addr = `tcp://${rr_host}:${rr_port}`;
 const client_rr_socket = zmq.socket('req');
 client_rr_socket.identity = identity;
 client_rr_socket.connect(rr_addr);
-client_rr_socket.on('message', (senderId, message) => onMessage(JSON.parse(message)));
+client_rr_socket.on('message', (message) => onMessage(JSON.parse(message)));
 
 /**
  * Atención de la respuesta
  */
-function onMessage() {
-  console.log(`Message '${msg.data}' recieved from '${msg.from}'`);
+function onMessage(rep) {
+  console.log(`Message '${rep.data}' recieved from '${rep.from}'`);
 };
 
 process.on('SIGINT', function () {

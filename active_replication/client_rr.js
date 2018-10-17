@@ -27,7 +27,7 @@ const handler_router_addr = `tcp://${handler_router_host}:${handler_router_port}
  */
 const rr_socket = zmq.socket('rep');
 rr_socket.bind(rr_addr);
-rr_socket.on('message', (message) => onClientMessage(JSON.parse(message)));
+rr_socket.on('message', (message) => onClientMessage(message.toString()));
 
 /**
  * Socket que conecta RETRANSMISIÓN-REDIRECCIÓN con HANDLER_ROUTER
@@ -35,7 +35,7 @@ rr_socket.on('message', (message) => onClientMessage(JSON.parse(message)));
 const handler_router_socket = zmq.socket('dealer');
 handler_router_socket.identity = client_id;
 handler_router_socket.connect(handler_router_addr);
-handler_router_socket.on('message', (senderId, message) => onHandlerMessage(JSON.parse(message)));
+handler_router_socket.on('message', (senderId, message) => onHandlerMessage(senderId, JSON.parse(message)));
 
 /**
  * Constructor del ID del REQUEST
@@ -60,10 +60,10 @@ function randSelectHandlerId() {
  *  2. Enviar el mensaje al HANDLER elegido
  *  3. Crear el timeout por si nadie responde
  *
- * @param JSON client request
+ * @param JSON client message
  * @param boolean whether calling from timeout function
  */
-function onClientMessage(request, from_timeout = false) {
+function onClientMessage(message, from_timeout = false) {
   if (!from_timeout) {
     request_counter++;
     current_request_id = buildRequestId(client_id, request_counter);
@@ -75,10 +75,10 @@ function onClientMessage(request, from_timeout = false) {
     to: handler_id,
     type: 'request',
     id: current_request_id,
-    data: request
+    data: message
   }));
 
-  timeoutTimer = setTimeout(onTimetoutExpired, 1000, request);
+  timeoutTimer = setTimeout(onTimetoutExpired, 1000, message);
 }
 
 /**
@@ -86,8 +86,8 @@ function onClientMessage(request, from_timeout = false) {
  *  1. Eliminar el timer del timeout
  *  2. Devolver la respuesta al CLIENTE que la solicitó
  */
-function onHandlerMessage(reply) {
-  if (reply.to !== client_id) {
+function onHandlerMessage(senderId, rep) {
+  if (rep.to !== client_id) {
     console.error(`El mensaje recibido del handler no se corresponde con el cliente actual`)
     return;
   }
@@ -96,7 +96,7 @@ function onHandlerMessage(reply) {
     clearTimeout(timeoutTimer);
   }
 
-  rr_socket.send(JSON.stringify(reply));
+  rr_socket.send(JSON.stringify(rep));
 }
 
 /**
@@ -104,9 +104,9 @@ function onHandlerMessage(reply) {
  *  1. Seleccionar otro HANDLER distinto
  *  2. Enviar el mensaje de nuevo al nuevo HANDLER
  */
-function onTimetoutExpired(request) {
-  console.log(`Tiempo de espera de la petición '${request.id}' agotado`)
-  onClientMessage(request, true);
+function onTimetoutExpired(message) {
+  console.log(`Tiempo de espera de la petición '${message}' agotado`)
+  onClientMessage(message, true);
 }
 
 process.on('SIGINT', function () {
