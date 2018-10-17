@@ -14,10 +14,8 @@ requester.identity = id_rr;
 requester.connect("tcp://127.0.0.1:6666");
 
 replyer.on("message", function request(msg){
-    console.log(msg.toString());
-    //replyer.send("Adios");
     message = msg.toString();
-    requester.send(JSON.stringify({'to': 'handler1', 'from': requester.identity, 'msg': message}));
+    requester.send(JSON.stringify({'to': list_handlers[0], 'from': requester.identity, 'msg': message}));
 });
 
 

@@ -13,19 +13,13 @@ socket_handler.bind("tcp://127.0.0.1:7777");
 
 //Esperamos respuesta del socket_client
 socket_client.on("message", function request(id, msg){
-    console.log("socket_client:");
-    console.log(id.toString());
     message = JSON.parse(msg.toString());
-    console.log(message['msg']);
-    console.log(message['to']);
-    //socket_handler.send([msg['to'], socket_handler.identity, message['msg']]);
-    socket_handler.send(['handler1', socket_handler.identity, 'holiiii']);
+    socket_handler.send([message['to'], '', msg.toString()]);
 });
 
 
 //Esperamos respuesta del socket_handler
 socket_handler.on("message", function request(id, msg){
-    console.log("socket_handler:");
-    console.log(msg.toString());
-    socket_client.send([id, socket_client.identity, msg.toString()]);
+    message = JSON.parse(msg.toString());
+    socket_client.send([message['to'], '', message['msg']]);
 });
