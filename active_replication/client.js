@@ -5,19 +5,35 @@ if (process.argv.length !== 4) {
   process.exit();
 }
 
-const IDENTITY = process.argv[2];
-const CLIENT_RR_PORT = process.argv[3];
+/**
+ * ESTADO DEL CLIENTE
+ */
+const identity = process.argv[2];
+const rr_host = 'localhost';
+const rr_port = process.argv[3];
+const rr_addr = `tcp://${rr_host}:${rr_port}`;
 
-const rr_socket = zmq.socket('req');
-rr_socket.identity = IDENTITY;
-rr_socket.connect(`tcp://localhost:${CLIENT_RR_PORT}`);
-rr_socket.on('message', (message) => onMessage(JSON.parse(message)));
-rr_socket.send("Hola");
+/**
+ * Socket que conecta CLIENTE con RETRANSMISIÓN-REDIRECCIÓN
+ */
+const client_rr_socket = zmq.socket('req');
+client_rr_socket.identity = identity;
+client_rr_socket.connect(rr_addr);
+client_rr_socket.on('message', (senderId, message) => onMessage(JSON.parse(message)));
 
+/**
+ * Atención de la respuesta
+ */
 function onMessage() {
   console.log(`Message '${msg.data}' recieved from '${msg.from}'`);
 };
 
 process.on('SIGINT', function () {
-  rr_socket.disconnect();
+  console.log("Closing ...");
+  client_rr_socket.close();
 });
+
+/**
+ * Envío del primer mensaje de CLIENTE
+ */
+client_rr_socket.send("Hola");

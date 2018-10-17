@@ -4,25 +4,61 @@ if (process.argv.length != 4) {
   console.error('Usage: node client_router.js <OUTER_PORT> <INNER_PORT>');
   process.exit();
 }
+/**
+ * ESTADO DEL HANDLER_ROUTER
+ */
+const rr_id = 'client_router_outer';
+const rr_host = '*';
+const rr_port = process.argv[2];
+const rr_addr = `tcp://${rr_host}:${rr_port}`;
 
-const OUTER_PORT = process.argv[2];
-const INNER_PORT = process.argv[3];
+const handler_id = 'client_router_inner';
+const handler_host = '*';
+const handler_port = process.argv[3];
+const handler_addr = `tcp://${handler_host}:${handler_port}`;
 
-const outer_router = zmq.socket('router');
-outer_router.identity = 'client_router_outer';
-outer_router.bind(`tcp://*:${OUTER_PORT}`);
+/**
+ * Socket expuesto hacia RETRANSMISIÓN-REDIRECCIÓN
+ */
+const rr_socket = zmq.socket('router');
+rr_socket.identity = rr_id;
+rr_socket.bind(rr_addr);
+rr_socket.on('message', (senderId, message) => onClientRequest(senderId, JSON.parse(message)));
 
-const inner_router = zmq.socket('router');
-inner_router.identity = 'client_router_inner';
-inner_router.bind(`tcp://*:${INNER_PORT}`);
+/**
+ * Socket expuesto hacia HANDLER
+ */
+const handler_socket = zmq.socket('router');
+handler_socket.identity = handler_id;
+handler_socket.bind(handler_addr);
+handler_socket.on('message', (senderId, message) => onHandlerReplay(senderId, JSON.parse(message)));
 
-outer_router.on('message', (senderId, message) => {
-  const msg = JSON.parse(message);
-  console.log(`Message '${msg.id}' recieved from '${msg.from}' for '${msg.to}' of type '${msg.type}': ${JSON.stringify(msg.data)}`);
-  inner_router.send([msg.to, inner_router.identity, JSON.stringify(msg)]);
-});
+/**
+ * Al recibir una petición de RETRANSMISIÓN-REDIRECCIÓN se debe:
+ *  1. Retransmitir la petición al HANDLER solicitado
+ *
+ * @param string sender id
+ * @param JSON request
+ */
+function onClientRequest(senderId, req) {
+  console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${JSON.stringify(req.data)}`);
+  handler_socket.send([req.to, handler_socket.identity, JSON.stringify(req)]);
+};
+
+/**
+ * Al recibir una respuesta de HANDLER se debe:
+ *  1. Retransmitir la respuesta al RETRANSMISIÓN-REDIRECCIÓN correspondiente
+ *
+ * @param string sender id
+ * @param JSON request
+ */
+function onHandlerReplay(senderId, req) {
+  console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${JSON.stringify(req.data)}`);
+  rr_socket.send([req.to, rr_socket.identity, JSON.stringify(req)]);
+};
 
 process.on('SIGINT', function () {
-  outer_router.disconnect();
-  inner_router.disconnect();
+  console.log("Closing ...");
+  rr_socket.close();
+  handler_socket.close();
 });
