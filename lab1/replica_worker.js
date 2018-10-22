@@ -8,6 +8,11 @@ requester.on("message", function request(id, msg){
     message = JSON.parse(msg.toString());
     message_msg = JSON.parse(message["msg"]);
     console.log(message_msg["msg"]);
+    console.log(message_msg["from"]);
+    console.log(message_msg["to"]);
+    console.log(message["msg"]);
+    console.log(message["from"]);
+    console.log(message["to"]);
     message_send = JSON.stringify({'to': message_msg['from'], 'from': message_msg['to'], 'msg': "Adios"})
     requester.send(JSON.stringify({'to': message['from'], 'from': requester.identity, 'msg':message_send}));
 });
