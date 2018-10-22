@@ -1,4 +1,5 @@
 const zmq = require('zeromq');
+var stdin = process.stdin;
 
 if (process.argv.length !== 4) {
   console.error('Usage: node client.js <IDENTIFIER> <CLIENT_RR_PORT>');
@@ -28,12 +29,20 @@ function onMessage(rep) {
   console.log(`Message '${rep.data}' recieved from '${rep.from}'`);
 };
 
-process.on('SIGINT', function () {
-  console.log("Closing ...");
-  client_rr_socket.close();
-});
+stdin.resume();
+stdin.setEncoding('utf8');
+stdin.on('data', (key) => {
+  if (key === '\u0003') {
+    // ctrl-c ( end of text )
+    console.log("Closing ...");
+    client_rr_socket.close();
+    process.exit();
+  }
 
-/**
- * Envío del primer mensaje de CLIENTE
- */
-client_rr_socket.send("Hola");
+  key = key.slice(0, -1)
+  if (key.length > 1) {
+
+    console.log("Sending message: " + key);
+    client_rr_socket.send(key);
+  }
+});

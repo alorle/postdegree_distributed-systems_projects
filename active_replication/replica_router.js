@@ -36,12 +36,12 @@ replica_socket.on('message', (senderId, message) => onReplicaReplay(senderId, JS
 
 function onHandlerRequest(senderId, req) {
   console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${req.data}`);
-  replica_socket.send(['replica1', req.from, JSON.stringify(req)]);
+  replica_socket.send([req.to, req.from, JSON.stringify(req)]);
 };
 
 function onReplicaReplay(senderId, rep) {
   console.log(`Message '${rep.id}' recieved from '${rep.from}' for '${rep.to}' of type '${rep.type}': ${rep.data}`);
-  handler_socket.send(['handler1', rep.from, JSON.stringify(rep)]);
+  handler_socket.send([rep.to, rep.from, JSON.stringify(rep)]);
 };
 
 process.on('SIGINT', function () {

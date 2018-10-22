@@ -28,6 +28,12 @@ replica_router_socket.identity = identity;
 replica_router_socket.connect(replica_router_addr);
 replica_router_socket.on('message', (senderId, message) => onReplicaReplay(senderId, JSON.parse(message)));
 
+const requests_map = {};
+
+const replicas = [
+  'replica1'
+];
+
 /**
  * Al recibir una petición de CLIENTE se debe:
  *  1. Obtener el número de secuencia de orden total de la petición
@@ -41,11 +47,14 @@ replica_router_socket.on('message', (senderId, message) => onReplicaReplay(sende
 function onClientRequest(senderId, req) {
   if (req.to === identity) {
     console.log(`Message '${req.id}' recieved from '${req.from}' of type '${req.type}': ${req.data}. Sending to all replicas...`);
-    replica_router_socket.send(JSON.stringify(req));
-
     // TODO: solicitar orden total
-    // TODO: para todas las peticiones desde la última servida hasta la recién recibida,
-    //       enviar a todas las réplicas (por ahora solo mandamos a una)
+    requests_map[req.id] = { ...req };
+
+    req.from = identity;
+    replicas.forEach((replica) => {
+      req.to = replica;
+      replica_router_socket.send(JSON.stringify(req));
+    })
   } else {
     console.error(`Message recieved for '${req.to}' but this is '${identity}'`)
   }
@@ -55,11 +64,15 @@ function onClientRequest(senderId, req) {
  * Al recibir una respuesta de REPLICA, retransmitir la respuesta a solicitante
  *
  * @param string sender id
- * @param JSON request
+ * @param JSON replay
  */
-function onReplicaReplay(senderId, req) {
-  console.log(`Message '${req.id}' recieved from '${req.from}' of type '${req.type}': ${req.data}`);
-  handler_router_socket.send(JSON.stringify(req));
+function onReplicaReplay(senderId, rep) {
+  console.log(`Message '${rep.id}' recieved from '${rep.from}' of type '${rep.type}': ${rep.data}`);
+  if (requests_map[rep.id] != undefined && requests_map[rep.id] !== null) {
+    rep.to = requests_map[rep.id].from;
+    rep.from = identity;
+    handler_router_socket.send(JSON.stringify(rep));
+  }
 }
 
 process.on('SIGINT', function () {

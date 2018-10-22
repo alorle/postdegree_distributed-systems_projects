@@ -34,7 +34,7 @@ function onClientRequest(senderId, req) {
       from: identity,
       to: req.from,
       type: 'replay',
-      message: "Adios"
+      data: "Adios"
     }))
   }
 }

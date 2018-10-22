@@ -13,6 +13,7 @@ let request_counter = 0;
 let current_request_id = null;
 let handler_id = null;
 let timeoutTimer = null;
+let timeoutMillis = 10000;
 
 const rr_host = '*';
 const rr_port = process.argv[2];
@@ -67,6 +68,8 @@ function onClientMessage(message, from_timeout = false) {
   if (!from_timeout) {
     request_counter++;
     current_request_id = buildRequestId(client_id, request_counter);
+  } else {
+    clearTimeout(timeoutTimer);
   }
   handler_id = randSelectHandlerId();
 
@@ -78,7 +81,7 @@ function onClientMessage(message, from_timeout = false) {
     data: message
   }));
 
-  timeoutTimer = setTimeout(onTimetoutExpired, 1000, message);
+  timeoutTimer = setTimeout(onTimetoutExpired, timeoutMillis, message);
 }
 
 /**
@@ -89,6 +92,11 @@ function onClientMessage(message, from_timeout = false) {
 function onHandlerMessage(senderId, rep) {
   if (rep.to !== client_id) {
     console.error(`El mensaje recibido del handler no se corresponde con el cliente actual`)
+    return;
+  }
+
+  if (rep.id !== current_request_id) {
+    console.error(`El mensaje recibido del handler no se corresponde con el mesnaje esperado (expected = ${current_request_id}, recieved = ${rep.id}`)
     return;
   }
 
