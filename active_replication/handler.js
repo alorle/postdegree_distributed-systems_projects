@@ -76,13 +76,13 @@ function onRequest(senderId, req) {
         replicas.forEach((replica) => {
           pending.to = replica;
           replica_router_socket.send(JSON.stringify(pending));
-        })
+        });
       }
 
       last_served_request = Math.max(last_served_request, seq);
     }
   } else {
-    console.error(`Message recieved for '${req.to}' but this is '${identity}'`)
+    console.error(`Message recieved for '${req.to}' but this is '${identity}'`);
   }
 }
 
