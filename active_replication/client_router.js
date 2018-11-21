@@ -39,13 +39,11 @@ handlers.on('message', (senderId, message) => onReplay(JSON.parse(message)));
 function onRequest(req) {
   console.log(`${LOG_TAG} - Request '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}'`);
   handlers.send([req.to, req.from, JSON.stringify(req)]);
-  // handlers.send([req.to, handlers.identity, JSON.stringify(req)]);
 }
 
 function onReplay(rep) {
   console.log(`${LOG_TAG} - Replay '${rep.id}' recieved from '${rep.from}' for '${rep.to}' of type '${rep.type}'`);
   clients.send([rep.to, rep.from, JSON.stringify(rep)]);
-  // clients.send([rep.to, clients.identity, JSON.stringify(rep)]);
 }
 
 process.on('SIGINT', function () {

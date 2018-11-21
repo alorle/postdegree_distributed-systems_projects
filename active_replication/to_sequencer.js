@@ -8,7 +8,7 @@ if (process.argv.length !== 4) {
 /**
  * TO Sequencer state
  */
-const identity = 'sequencer';
+const identity = 'TOSequencer';
 let next_seq = 1;
 const requests = [];
 

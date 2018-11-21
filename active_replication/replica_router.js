@@ -21,7 +21,7 @@ const replicas_addr = `tcp://${replicas_host}:${replicas_port}`;
 const LOG_TAG = 'ROUTER';
 
 /**
- * Socket expuesto hacia HANDLER
+ * Handlers side router
  */
 const handlers = zmq.socket('router');
 handlers.identity = handlers_id;
@@ -29,7 +29,7 @@ handlers.bind(handlers_addr);
 handlers.on('message', (senderId, message) => onHandlerRequest(JSON.parse(message)));
 
 /**
- * Socket expuesto hacia REPLICA
+ * Replicas side router
  */
 const replicas = zmq.socket('router');
 replicas.identity = replicas_id;
