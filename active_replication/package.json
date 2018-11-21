@@ -2,12 +2,13 @@
   "name": "lab1",
   "version": "1.0.0",
   "scripts": {
-    "client": "node client.js",
-    "client_rr": "node client_rr.js",
-    "client_router": "node client_router.js",
-    "handler": "node handler.js",
-    "handler_router": "node handler_router.js",
-    "replica": "node replica.js"
+    "client": "node client.js client1 2000",
+    "client_rr": "node client_rr.js 2000 3000",
+    "client_router": "node client_router.js 3000 4000",
+    "handler": "node handler.js handler1 4000 5000 10000 10001",
+    "replica_router": "node replica_router.js 5000 6000",
+    "replica": "node replica.js replica1 6000",
+    "to_sequencer": "node to_sequencer.js 10000 10001"
   },
   "license": "MIT",
   "dependencies": {

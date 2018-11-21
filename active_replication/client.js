@@ -1,48 +1,47 @@
 const zmq = require('zeromq');
-var stdin = process.stdin;
+const stdin = process.stdin;
 
 if (process.argv.length !== 4) {
-  console.error('Usage: node client.js <IDENTIFIER> <CLIENT_RR_PORT>');
+  console.error('Usage: node client.js <CLIENT_ID> <RETRANSMISSION-REDIRECTION_PORT>');
   process.exit();
 }
 
 /**
- * ESTADO DEL CLIENTE
+ * CLIENT state
  */
 const identity = process.argv[2];
-const rr_host = 'localhost';
-const rr_port = process.argv[3];
-const rr_addr = `tcp://${rr_host}:${rr_port}`;
+const socket_addr = `tcp://localhost:${process.argv[3]}`;
+const LOG_TAG = `CLIENT[${identity}]`;
+console.log(`Client '${identity}' will be connected to '${socket_addr}'`);
 
 /**
- * Socket que conecta CLIENTE con RETRANSMISIÓN-REDIRECCIÓN
+ * Connect CLIENT with RETRANSMISSION-REDIRECTION
  */
-const client_rr_socket = zmq.socket('req');
-client_rr_socket.identity = identity;
-client_rr_socket.connect(rr_addr);
-client_rr_socket.on('message', (message) => onMessage(JSON.parse(message)));
+const socket = zmq.socket('req');
+socket.identity = identity;
+socket.connect(socket_addr);
+socket.on('message', (message) => onReplay(JSON.parse(message)));
 
 /**
- * Atención de la respuesta
+ * Process replay
  */
-function onMessage(rep) {
-  console.log(`Message '${rep.data}' recieved from '${rep.from}'`);
-};
+function onReplay(rep) {
+  console.log(`${LOG_TAG} - Replay recieved from '${rep.from}':`, rep.data);
+}
 
 stdin.resume();
 stdin.setEncoding('utf8');
 stdin.on('data', (key) => {
   if (key === '\u0003') {
     // ctrl-c ( end of text )
-    console.log("Closing ...");
-    client_rr_socket.close();
+    console.log(`${LOG_TAG} - Closing ...`);
+    socket.close();
     process.exit();
   }
 
-  key = key.slice(0, -1)
+  key = key.slice(0, -1);
   if (key.length > 1) {
-
-    console.log("Sending message: " + key);
-    client_rr_socket.send(key);
+    console.log(`${LOG_TAG} - Sending request:`, key);
+    socket.send(key);
   }
 });

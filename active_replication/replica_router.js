@@ -1,51 +1,53 @@
 const zmq = require('zeromq');
 
 if (process.argv.length != 4) {
-  console.error('Usage: node replica_router.js <HANDLER_SIDE_PORT> <REPLICA_SIDE_PORT>');
+  console.error('Usage: node replica_router.js <HANDLERS_PORT> <REPLICAS_PORT>');
   process.exit();
 }
 
 /**
- * ESTADO DEL REPLICA_ROUTER
+ * ROUTER state
  */
-const handler_id = 'replica_router_handler';
-const handler_host = '*';
-const handler_port = process.argv[2];
-const handler_addr = `tcp://${handler_host}:${handler_port}`;
+const handlers_id = 'replica_router_handler';
+const handlers_host = '*';
+const handlers_port = process.argv[2];
+const handlers_addr = `tcp://${handlers_host}:${handlers_port}`;
 
-const replica_id = 'replica_router_replica';
-const replica_host = '*';
-const replica_port = process.argv[3];
-const replica_addr = `tcp://${replica_host}:${replica_port}`;
+const replicas_id = 'replica_router_replica';
+const replicas_host = '*';
+const replicas_port = process.argv[3];
+const replicas_addr = `tcp://${replicas_host}:${replicas_port}`;
+
+const LOG_TAG = 'ROUTER';
 
 /**
  * Socket expuesto hacia HANDLER
  */
-const handler_socket = zmq.socket('router');
-handler_socket.identity = handler_id;
-handler_socket.bind(handler_addr);
-handler_socket.on('message', (senderId, message) => onHandlerRequest(senderId, JSON.parse(message)));
+const handlers = zmq.socket('router');
+handlers.identity = handlers_id;
+handlers.bind(handlers_addr);
+handlers.on('message', (senderId, message) => onHandlerRequest(JSON.parse(message)));
 
 /**
  * Socket expuesto hacia REPLICA
  */
-const replica_socket = zmq.socket('router');
-replica_socket.identity = replica_id;
-replica_socket.bind(replica_addr);
-replica_socket.on('message', (senderId, message) => onReplicaReplay(senderId, JSON.parse(message)));
+const replicas = zmq.socket('router');
+replicas.identity = replicas_id;
+replicas.bind(replicas_addr);
+replicas.on('message', (senderId, message) => onReplicaReplay(JSON.parse(message)));
 
-function onHandlerRequest(senderId, req) {
-  console.log(`Message '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}': ${req.data}`);
-  replica_socket.send([req.to, req.from, JSON.stringify(req)]);
-};
+function onHandlerRequest(req) {
+  console.log(`${LOG_TAG} - Request '${req.id}' recieved from '${req.from}' for '${req.to}' of type '${req.type}'`);
+  replicas.send([req.to, req.from, JSON.stringify(req)]);
+}
 
-function onReplicaReplay(senderId, rep) {
-  console.log(`Message '${rep.id}' recieved from '${rep.from}' for '${rep.to}' of type '${rep.type}': ${rep.data}`);
-  handler_socket.send([rep.to, rep.from, JSON.stringify(rep)]);
-};
+function onReplicaReplay(rep) {
+  console.log(`${LOG_TAG} - Replay '${rep.id}' recieved from '${rep.from}' for '${rep.to}' of type '${rep.type}': ${rep.data}`);
+  handlers.send([rep.to, rep.from, JSON.stringify(rep)]);
+}
 
 process.on('SIGINT', function () {
-  console.log("Closing ...");
-  handler_socket.close();
-  replica_socket.close();
+  console.log(`${LOG_TAG} - Closing ...`);
+  handlers.close();
+  replicas.close();
 });
