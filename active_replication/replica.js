@@ -1,4 +1,5 @@
 const zmq = require('zeromq');
+const handlers = require('./elements').handlers;
 
 if (process.argv.length !== 4) {
   console.error('Usage: node replica.js <IDENTIFIER> <ROUTER_PORT>');
@@ -42,8 +43,7 @@ function onTORequest(senderId, req) {
     // Si ya se ha recibido la petición anteriormente, comprobar si ha sido procesada
     if (typeof (stored_req.replay) != undefined) {
       // La petición ha sido procesada con anterioridad, así que se debe reenviar la respuesta
-      stored_req.replay.to = req.from;
-      router_socket.send(JSON.stringify(stored_req.replay));
+      sendTOReplay(stored_req.replay);
     }
   }
 
@@ -60,10 +60,18 @@ function onTORequest(senderId, req) {
       data: processing_req.data.split('').reverse().join('')
     };
 
-    router_socket.send(JSON.stringify(processing_req.replay));
+    sendTOReplay(processing_req.replay);
     requests_map.set(processing_req.seq, processing_req);
     next_request++;
   }
+}
+
+function sendTOReplay(rep) {
+  console.log(`Replaying to all handlers ${rep.id}`);
+  handlers.forEach((handler) => {
+    rep.to = handler;
+    router_socket.send(JSON.stringify(rep));
+  });
 }
 
 process.on('SIGINT', function () {

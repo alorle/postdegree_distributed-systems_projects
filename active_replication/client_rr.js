@@ -1,14 +1,15 @@
 const zmq = require('zeromq');
+const handlers_ids = require('./elements').handlers;
 
-if (process.argv.length != 4) {
-  console.error('Usage: node client_rr.js <CLIENT_PORT> <HANDLER_ROUTER_PORT>');
+if (process.argv.length != 5) {
+  console.error('Usage: node client_rr.js <IDENTITY> <CLIENT_PORT> <HANDLER_ROUTER_PORT>');
   process.exit();
 }
 
 /**
  * RETRANSMISSION-REDIRECTION state
  */
-const client_id = 'client1';
+const client_id = process.argv[2];
 let request_counter = 0;
 let current_request_id = null;
 let handler_id = null;
@@ -16,11 +17,11 @@ let timeoutTimer = null;
 let timeoutMillis = 10000;
 
 const rr_host = '*';
-const rr_port = process.argv[2];
+const rr_port = process.argv[3];
 const rr_addr = `tcp://${rr_host}:${rr_port}`;
 
 const handler_router_host = 'localhost';
-const handler_router_port = process.argv[3];
+const handler_router_port = process.argv[4];
 const handler_router_addr = `tcp://${handler_router_host}:${handler_router_port}`;
 
 const LOG_TAG = `RR[${client_id}]`;
@@ -51,7 +52,7 @@ function buildRequestId(client, count) {
  * Random selection of a handler
  */
 function randSelectHandlerId() {
-  return 'handler1';
+  return handlers_ids[Math.floor(Math.random() * (handlers_ids.length - 1))];
 }
 
 function onRequest(message, from_timeout = false) {

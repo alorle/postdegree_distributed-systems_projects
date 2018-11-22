@@ -1,4 +1,5 @@
 const zmq = require('zeromq');
+const replicas = require('./elements').replicas;
 
 if (process.argv.length !== 7) {
   console.error('Usage: node handler.js <IDENTIFIER> <CLIENT_ROUTER_PORT> <REPLICA_ROUTER_PORT> <SEQUENCER_ROUTER_PORT> <SEQUENCER_SUBSCRIBER_PORT>');
@@ -48,10 +49,6 @@ to_subscriber.connect(sequencer_subscriber_addr);
 to_subscriber.subscribe('TOCast');
 to_subscriber.on('message', (message) => onTOCast(JSON.parse(message.toString().replace('TOCast ', ''))));
 
-const replicas = [
-  'replica1'
-];
-
 /**
  * Al recibir una petición de CLIENTE se debe:
  *  1. Obtener el número de secuencia de orden total de la petición
@@ -66,23 +63,26 @@ function onRequest(senderId, req) {
   if (req.to === identity) {
     console.log(`Message '${req.id}' recieved from '${req.from}' of type '${req.type}': ${req.data}`);
     const seq = getSeq(req);
-
-    if (seq > last_served_request) {
-      for (let i = last_served_request + 1; i <= seq; i++) {
-        const pending = { ...getReq(i) };
-        pending.from = identity;
-
-        console.log(`Message '${pending.id}' recieved from '${pending.from}' of type '${pending.type}': ${pending.data}. Sending to all replicas`);
-        replicas.forEach((replica) => {
-          pending.to = replica;
-          replica_router_socket.send(JSON.stringify(pending));
-        });
-      }
-
-      last_served_request = Math.max(last_served_request, seq);
-    }
+    attendPendingRequests(seq);
   } else {
     console.error(`Message recieved for '${req.to}' but this is '${identity}'`);
+  }
+}
+
+function attendPendingRequests(seq) {
+  if (seq > last_served_request) {
+    for (let i = last_served_request + 1; i <= seq; i++) {
+      const pending = { ...getReq(i) };
+      pending.from = identity;
+
+      console.log(`Message '${pending.id}' recieved from '${pending.from}' of type '${pending.type}': ${pending.data}. Sending to all replicas`);
+      replicas.forEach((replica) => {
+        pending.to = replica;
+        replica_router_socket.send(JSON.stringify(pending));
+      });
+    }
+
+    last_served_request = Math.max(last_served_request, seq);
   }
 }
 
@@ -95,11 +95,14 @@ function onRequest(senderId, req) {
 function onTOReplay(senderId, rep) {
   console.log(`Message '${rep.id}' recieved from '${rep.from}' of type '${rep.type}': ${rep.data}`);
 
-  const req = { ...getReqById(rep.id) };
-  if (req !== null) {
-    rep.to = req.from;
-    rep.from = identity;
-    handler_router_socket.send(JSON.stringify(rep));
+  const req = getReqById(rep.id);
+  if (req !== null && !req.replayed) {
+    if (req.to === identity) {
+      rep.to = req.from;
+      rep.from = identity;
+      req.replayed = true;
+      handler_router_socket.send(JSON.stringify(rep));
+    }
   }
 }
 
@@ -110,8 +113,9 @@ function onTOReplay(senderId, rep) {
  */
 function onTOCast(to_request) {
   requests.push(to_request);
-
-  // TODO: realizar envios pendientes
+  if (to_request.to == identity) {
+    attendPendingRequests(to_request.seq);
+  }
 }
 
 /**
