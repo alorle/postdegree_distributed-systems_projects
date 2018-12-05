@@ -56,6 +56,7 @@ function randSelectHandlerId() {
 }
 
 function onRequest(message, from_timeout = false) {
+  console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   if (!from_timeout) {
     console.log(`${LOG_TAG} - Message recieved: '${message}'`);
     request_counter++;
@@ -70,6 +71,8 @@ function onRequest(message, from_timeout = false) {
     to: handler_id,
     type: 'request',
     id: current_request_id,
+    client_id: client_id,
+    client_seq: request_counter,
     data: message
   };
   handlers.send(JSON.stringify(req));
