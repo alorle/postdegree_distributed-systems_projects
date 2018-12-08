@@ -20,6 +20,8 @@ const handlers_addr = `tcp://${handlers_host}:${handlers_port}`;
 
 const LOG_TAG = 'ROUTER';
 
+console.log(`${LOG_TAG} - ${clients_addr} <> ${handlers_addr}`);
+
 /**
  * Clients side router
  */

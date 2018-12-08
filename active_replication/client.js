@@ -1,16 +1,21 @@
 const zmq = require('zeromq');
 const stdin = process.stdin;
 
-if (process.argv.length !== 4) {
-  console.error('Usage: node client.js <CLIENT_ID> <RETRANSMISSION-REDIRECTION_PORT>');
+const CLIENT_ID = process.env.CLIENT_ID || process.argv[2];
+const RR_PORT = process.env.RR_PORT || process.argv[3];
+const AUTO_MODE = process.env.AUTO_MODE || true;
+
+if (CLIENT_ID == undefined || CLIENT_ID === null || CLIENT_ID.length === 0
+  || RR_PORT == undefined || RR_PORT === null) {
+  console.error('Usage: node client.js <CLIENT_ID> <RR_PORT>');
   process.exit();
 }
 
 /**
  * CLIENT state
  */
-const identity = process.argv[2];
-const socket_addr = `tcp://localhost:${process.argv[3]}`;
+const identity = CLIENT_ID;
+const socket_addr = `tcp://localhost:${RR_PORT}`;
 const LOG_TAG = `CLIENT[${identity}]`;
 console.log(`Client '${identity}' will be connected to '${socket_addr}'`);
 
@@ -27,21 +32,45 @@ socket.on('message', (message) => onReplay(JSON.parse(message)));
  */
 function onReplay(rep) {
   console.log(`${LOG_TAG} - Replay recieved from '${rep.from}':`, rep.data);
+  showTrace(rep.trace);
+  setTimeout(send, 2000);
 }
 
-stdin.resume();
-stdin.setEncoding('utf8');
-stdin.on('data', (key) => {
-  if (key === '\u0003') {
-    // ctrl-c ( end of text )
-    console.log(`${LOG_TAG} - Closing ...`);
-    socket.close();
-    process.exit();
-  }
+function showTrace(trace) {
+  trace = Object.keys(trace).map((key) => `${trace[key]} - ${new Date(trace[key])} -> ${key}`);
+  console.log('Trace:');
+  trace.forEach(t => console.log(` - ${t}`));
+}
 
-  key = key.slice(0, -1);
-  if (key.length > 1) {
-    console.log(`${LOG_TAG} - Sending request:`, key);
-    socket.send(key);
-  }
-});
+function createRandomString(length) {
+  let str = '';
+  for (; str.length < length; str += Math.random().toString(36).substr(2));
+  return str.substr(0, length);
+}
+
+function send() {
+  const msg = createRandomString(20);
+  console.log(`${LOG_TAG} - Sending request:`, msg);
+  socket.send(msg);
+}
+
+if (AUTO_MODE) {
+  send();
+} else {
+  stdin.resume();
+  stdin.setEncoding('utf8');
+  stdin.on('data', (key) => {
+    if (key === '\u0003') {
+      // ctrl-c ( end of text )
+      console.log(`${LOG_TAG} - Closing ...`);
+      socket.close();
+      process.exit();
+    }
+
+    key = key.slice(0, -1);
+    if (key.length > 1) {
+      console.log(`${LOG_TAG} - Sending request:`, key);
+      socket.send(key);
+    }
+  });
+}

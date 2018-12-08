@@ -20,6 +20,8 @@ const replicas_addr = `tcp://${replicas_host}:${replicas_port}`;
 
 const LOG_TAG = 'ROUTER';
 
+console.log(`${LOG_TAG} - ${handlers_addr} <> ${replicas_addr}`);
+
 /**
  * Handlers side router
  */

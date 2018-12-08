@@ -22,6 +22,8 @@ const pub_addr = `tcp://${pub_host}:${pub_port}`;
 
 const LOG_TAG = `CLIENT[${identity}]`;
 
+console.log(`${LOG_TAG} - Listening on ${router_addr} and on ${pub_addr}`);
+
 const router = zmq.socket('router');
 router.identity = identity;
 router.bind(router_addr);

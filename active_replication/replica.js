@@ -1,18 +1,26 @@
 const zmq = require('zeromq');
 const handlers = require('./elements').handlers;
 
-if (process.argv.length !== 4) {
-  console.error('Usage: node replica.js <IDENTIFIER> <ROUTER_PORT>');
+const REPLICA_ID = process.env.REPLICA_ID || process.argv[2];
+const HANDLERS_PORT = process.env.HANDLERS_PORT || process.argv[3];
+
+if (REPLICA_ID == undefined || REPLICA_ID === null || REPLICA_ID.length === 0
+  || HANDLERS_PORT == undefined || HANDLERS_PORT === null) {
+  console.error('Usage: node replica.js <REPLICA_ID> <HANDLERS_PORT>');
   process.exit();
 }
 
 /**
  * ESTADO DEL REPLICA
  */
-const identity = process.argv[2];
-const replica_router_host = 'localhost';
-const replica_router_port = process.argv[3];
+const identity = REPLICA_ID;
+const replica_router_host = 'replica_router';
+const replica_router_port = HANDLERS_PORT;
 const replica_router_addr = `tcp://${replica_router_host}:${replica_router_port}`;
+
+const LOG_TAG = `REPLICA[${identity}]`;
+
+console.log(`${LOG_TAG} - Request from ${replica_router_addr} will be replied`);
 
 let next_request = 1;
 const requests_map = new Map();
@@ -35,6 +43,7 @@ function onTORequest(senderId, req) {
   if (!requests_map.has(req.seq)) {
     // Si es la primera vez que ve la petición, almacenarla en el mapa de peticiones
     console.log(`Message '${req.id}' stored in requests map`);
+    req.trace[`input_${identity}`] = new Date().valueOf();
     requests_map.set(req.seq, req);
   } else {
     console.log(`Message '${req.id}' already in requests map`);
@@ -57,7 +66,8 @@ function onTORequest(senderId, req) {
       from: identity,
       to: processing_req.from,
       type: 'replay',
-      data: processing_req.data.split('').reverse().join('')
+      data: processing_req.data.split('').reverse().join(''),
+      trace: processing_req.trace
     };
 
     sendTOReplay(processing_req.replay);
@@ -70,6 +80,7 @@ function sendTOReplay(rep) {
   console.log(`Replaying to all handlers ${rep.id}`);
   handlers.forEach((handler) => {
     rep.to = handler;
+    rep.trace[`output_${identity}`] = new Date().valueOf();
     router_socket.send(JSON.stringify(rep));
   });
 }

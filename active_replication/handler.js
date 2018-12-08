@@ -1,33 +1,47 @@
 const zmq = require('zeromq');
 const replicas = require('./elements').replicas;
 
-if (process.argv.length !== 7) {
-  console.error('Usage: node handler.js <IDENTIFIER> <CLIENT_ROUTER_PORT> <REPLICA_ROUTER_PORT> <SEQUENCER_ROUTER_PORT> <SEQUENCER_SUBSCRIBER_PORT>');
+const HANDLER_ID = process.env.HANDLER_ID || process.argv[2];
+const CLIENTS_PORT = process.env.CLIENTS_PORT || process.argv[3];
+const REPLICAS_PORT = process.env.REPLICAS_PORT || process.argv[4];
+const TO_ROUTER_PORT = process.env.TO_ROUTER_PORT || process.argv[5];
+const TO_SUBSCRIBER_PORT = process.env.RR_PORT || process.argv[6];
+
+if (HANDLER_ID === undefined || HANDLER_ID == null || HANDLER_ID.length === 0
+  || CLIENTS_PORT === undefined || CLIENTS_PORT == null
+  || REPLICAS_PORT === undefined || REPLICAS_PORT == null
+  || TO_ROUTER_PORT === undefined || TO_ROUTER_PORT == null
+  || TO_SUBSCRIBER_PORT === undefined || TO_SUBSCRIBER_PORT == null) {
+  console.error('Usage: node handler.js <HANDLER_ID> <CLIENTS_PORT> <REPLICAS_PORT> <TO_ROUTER_PORT> <TO_SUBSCRIBER_PORT>');
   process.exit();
 }
 
 /**
  * ESTADO DEL HANDLER
  */
-const identity = process.argv[2];
+const identity = HANDLER_ID;
 let last_served_request = 0;
 const requests = [];
 
-const handler_router_host = 'localhost';
-const handler_router_port = process.argv[3];
+const handler_router_host = 'client_router';
+const handler_router_port = CLIENTS_PORT;
 const handler_router_addr = `tcp://${handler_router_host}:${handler_router_port}`;
 
-const replica_router_host = 'localhost';
-const replica_router_port = process.argv[4];
+const replica_router_host = 'replica_router';
+const replica_router_port = REPLICAS_PORT;
 const replica_router_addr = `tcp://${replica_router_host}:${replica_router_port}`;
 
-const sequencer_router_host = 'localhost';
-const sequencer_router_port = process.argv[5];
+const sequencer_router_host = 'to_sequencer';
+const sequencer_router_port = TO_ROUTER_PORT;
 const sequencer_router_addr = `tcp://${sequencer_router_host}:${sequencer_router_port}`;
 
-const sequencer_subscriber_host = 'localhost';
-const sequencer_subscriber_port = process.argv[6];
+const sequencer_subscriber_host = 'to_sequencer';
+const sequencer_subscriber_port = TO_SUBSCRIBER_PORT;
 const sequencer_subscriber_addr = `tcp://${sequencer_subscriber_host}:${sequencer_subscriber_port}`;
+
+const LOG_TAG = `HANDLER[${identity}]`;
+
+console.log(`${LOG_TAG} - Request from ${handler_router_addr}, will be send to ${replica_router_addr} (TO: ${sequencer_router_addr} and ${sequencer_subscriber_addr})`);
 
 const handler_router_socket = zmq.socket('dealer');
 handler_router_socket.identity = identity;
@@ -63,6 +77,7 @@ function onRequest(senderId, req) {
   if (req.to === identity) {
     console.log(`Message '${req.id}' recieved from '${req.from}' of type '${req.type}': ${req.data}`);
     const seq = getSeq(req);
+    console.log(`Seq of meesage with id '${req.id}': ${seq}`);
     attendPendingRequests(seq);
   } else {
     console.error(`Message recieved for '${req.to}' but this is '${identity}'`);
@@ -70,6 +85,7 @@ function onRequest(senderId, req) {
 }
 
 function attendPendingRequests(seq) {
+  console.log(`¿¿${seq} > ${last_served_request}??`);
   if (seq > last_served_request) {
     for (let i = last_served_request + 1; i <= seq; i++) {
       const pending = { ...getReq(i) };
@@ -100,6 +116,7 @@ function onTOReplay(senderId, rep) {
     if (req.to === identity) {
       rep.to = req.from;
       rep.from = identity;
+      rep.trace[`output_${identity}`] = new Date().valueOf();
       req.replayed = true;
       handler_router_socket.send(JSON.stringify(rep));
     }
@@ -112,6 +129,7 @@ function onTOReplay(senderId, rep) {
  * @param {*} to_request
  */
 function onTOCast(to_request) {
+  to_request.trace[`input_${identity}`] = new Date().valueOf();
   requests.push(to_request);
   if (to_request.to == identity) {
     attendPendingRequests(to_request.seq);

@@ -1,15 +1,21 @@
 const zmq = require('zeromq');
 const handlers_ids = require('./elements').handlers;
 
-if (process.argv.length != 5) {
-  console.error('Usage: node client_rr.js <IDENTITY> <CLIENT_PORT> <HANDLER_ROUTER_PORT>');
+const CLIENT_ID = process.env.CLIENT_ID || process.argv[2];
+const CLIENT_PORT = process.env.CLIENT_PORT || process.argv[3];
+const HANDLERS_PORT = process.env.HANDLERS_PORT || process.argv[4];
+
+if (CLIENT_ID == undefined || CLIENT_ID === null || CLIENT_ID.length === 0
+  || CLIENT_PORT == undefined || CLIENT_PORT === null
+  || HANDLERS_PORT == undefined || HANDLERS_PORT === null) {
+  console.error('Usage: node client_rr.js <CLIENT_ID> <CLIENT_PORT> <HANDLERS_PORT>');
   process.exit();
 }
 
 /**
  * RETRANSMISSION-REDIRECTION state
  */
-const client_id = process.argv[2];
+const client_id = CLIENT_ID;
 let request_counter = 0;
 let current_request_id = null;
 let handler_id = null;
@@ -17,14 +23,16 @@ let timeoutTimer = null;
 let timeoutMillis = 10000;
 
 const rr_host = '*';
-const rr_port = process.argv[3];
+const rr_port = CLIENT_PORT;
 const rr_addr = `tcp://${rr_host}:${rr_port}`;
 
-const handler_router_host = 'localhost';
-const handler_router_port = process.argv[4];
+const handler_router_host = 'client_router';
+const handler_router_port = HANDLERS_PORT;
 const handler_router_addr = `tcp://${handler_router_host}:${handler_router_port}`;
 
 const LOG_TAG = `RR[${client_id}]`;
+
+console.log(`${LOG_TAG} - Listening on ${rr_addr}, will send requests to ${handler_router_addr}`);
 
 /**
  * CLIENT socket
@@ -52,7 +60,7 @@ function buildRequestId(client, count) {
  * Random selection of a handler
  */
 function randSelectHandlerId() {
-  return handlers_ids[Math.floor(Math.random() * (handlers_ids.length - 1))];
+  return handlers_ids[Math.floor(Math.random() * (handlers_ids.length))];
 }
 
 function onRequest(message, from_timeout = false) {
@@ -70,7 +78,10 @@ function onRequest(message, from_timeout = false) {
     to: handler_id,
     type: 'request',
     id: current_request_id,
-    data: message
+    data: message,
+    trace: {
+      [`input_${client_id}`]: new Date().valueOf(),
+    }
   };
   handlers.send(JSON.stringify(req));
   console.log(`${LOG_TAG} - Request send to '${handler_id}' with id '${current_request_id}'`);
@@ -93,7 +104,8 @@ function onReplay(rep) {
     clearTimeout(timeoutTimer);
   }
 
-  console.log(`${LOG_TAG} - Replay recieved from '${rep.from}' with id '${rep.id}'`, rep);
+  console.log(`${LOG_TAG} - Replay recieved from '${rep.from}' with id '${rep.id}'`);
+  rep.trace[`output_${client_id}`] = new Date().valueOf();
   client.send(JSON.stringify(rep));
 }
 

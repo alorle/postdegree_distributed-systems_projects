@@ -1,0 +1,210 @@
+version: '3.7'
+
+services:
+
+  # TO sequencer
+  to_sequencer:
+    image: active_replication/to_sequencer
+    container_name: to_sequencer
+    # ports:
+    #   - "10000:10000" # TO ROUTER
+    #   - "10001:10001" # TO PUB/SUB
+
+  # CLIENTS-HANDLERS router
+  client_router:
+    image: active_replication/client_router
+    container_name: client_router
+    # ports:
+    #   - "4000:4000" # HANDLERS_PORT del client_rr (4000)
+    #   - "5000:5000" # CLIENTS_PORT del handler (5000)
+
+  # HANDLERS-REPLICAS router
+  replica_router:
+    image: active_replication/replica_router
+    container_name: replica_router
+    # ports:
+    #   - "6000:6000" # REPLICAS_PORT del handler (6000)
+    #   - "7000:7000" # HANDLERS_PORT del replica (7000)
+
+  # RRs
+  client_rr1:
+    image: active_replication/client_rr
+    container_name: client_rr1
+    ports:
+      - "3001:3000"
+    environment:
+      - CLIENT_ID=client1
+      # - CLIENT_PORT=3000
+      # - HANDLERS_PORT=4000
+  client_rr2:
+    image: active_replication/client_rr
+    container_name: client_rr2
+    ports:
+      - "3002:3000"
+    environment:
+      - CLIENT_ID=client2
+  client_rr3:
+    image: active_replication/client_rr
+    container_name: client_rr3
+    ports:
+      - "3003:3000"
+    environment:
+      - CLIENT_ID=client3
+  client_rr4:
+    image: active_replication/client_rr
+    container_name: client_rr4
+    ports:
+      - "3004:3000"
+    environment:
+      - CLIENT_ID=client4
+  client_rr5:
+    image: active_replication/client_rr
+    container_name: client_rr5
+    ports:
+      - "3005:3000"
+    environment:
+      - CLIENT_ID=client5
+  # client_rr6:
+  #   image: active_replication/client_rr
+  #   container_name: client_rr6
+  #   ports:
+  #     - "3006:3000"
+  #   environment:
+  #     - CLIENT_ID=client6
+  # client_rr7:
+  #   image: active_replication/client_rr
+  #   container_name: client_rr7
+  #   ports:
+  #     - "3007:3000"
+  #   environment:
+  #     - CLIENT_ID=client7
+  # client_rr8:
+  #   image: active_replication/client_rr
+  #   container_name: client_rr8
+  #   ports:
+  #     - "3008:3000"
+  #   environment:
+  #     - CLIENT_ID=client8
+  # client_rr9:
+  #   image: active_replication/client_rr
+  #   container_name: client_rr9
+  #   ports:
+  #     - "3009:3000"
+  #   environment:
+  #     - CLIENT_ID=client9
+  # client_rr10:
+  #   image: active_replication/client_rr
+  #   container_name: client_rr10
+  #   ports:
+  #     - "30010:3000"
+  #   environment:
+  #     - CLIENT_ID=client10
+
+  # HANDLERs
+  handler1:
+    image: active_replication/handler
+    container_name: handler1
+    environment:
+      - HANDLER_ID=handler1
+      # - CLIENTS_PORT=5000
+      # - REPLICAS_PORT=6000
+      # - TO_ROUTER_PORT=10000
+      # - TO_SUBSCRIBER_PORT=10001
+  handler2:
+    image: active_replication/handler
+    container_name: handler2
+    environment:
+      - HANDLER_ID=handler2
+  handler3:
+    image: active_replication/handler
+    container_name: handler3
+    environment:
+      - HANDLER_ID=handler3
+  # handler4:
+  #   image: active_replication/handler
+  #   container_name: handler4
+  #   environment:
+  #     - HANDLER_ID=handler4
+  # handler5:
+  #   image: active_replication/handler
+  #   container_name: handler5
+  #   environment:
+  #     - HANDLER_ID=handler5
+  # handler6:
+  #   image: active_replication/handler
+  #   container_name: handler6
+  #   environment:
+  #     - HANDLER_ID=handler6
+  # handler7:
+  #   image: active_replication/handler
+  #   container_name: handler7
+  #   environment:
+  #     - HANDLER_ID=handler7
+  # handler8:
+  #   image: active_replication/handler
+  #   container_name: handler8
+  #   environment:
+  #     - HANDLER_ID=handler8
+  # handler9:
+  #   image: active_replication/handler
+  #   container_name: handler9
+  #   environment:
+  #     - HANDLER_ID=handler9
+  # handler10:
+  #   image: active_replication/handler
+  #   container_name: handler10
+  #   environment:
+  #     - HANDLER_ID=handler10
+
+  # REPLICAs
+  replica1:
+    image: active_replication/replica
+    container_name: replica1
+    environment:
+      - REPLICA_ID=replica1
+      # - HANDLERS_PORT=7000
+  replica2:
+    image: active_replication/replica
+    container_name: replica2
+    environment:
+      - REPLICA_ID=replica2
+  replica3:
+    image: active_replication/replica
+    container_name: replica3
+    environment:
+      - REPLICA_ID=replica3
+  # replica4:
+  #   image: active_replication/replica
+  #   container_name: replica4
+  #   environment:
+  #     - REPLICA_ID=replica4
+  # replica5:
+  #   image: active_replication/replica
+  #   container_name: replica5
+  #   environment:
+  #     - REPLICA_ID=replica5
+  # replica6:
+  #   image: active_replication/replica
+  #   container_name: replica6
+  #   environment:
+  #     - REPLICA_ID=replica6
+  # replica7:
+  #   image: active_replication/replica
+  #   container_name: replica7
+  #   environment:
+  #     - REPLICA_ID=replica7
+  # replica8:
+  #   image: active_replication/replica
+  #   container_name: replica8
+  #   environment:
+  #     - REPLICA_ID=replica8
+  # replica9:
+  #   image: active_replication/replica
+  #   container_name: replica9
+  #   environment:
+  #     - REPLICA_ID=replica9
+  # replica10:
+  #   image: active_replication/replica
+  #   container_name: replica10
+  #   environment:
+  #     - REPLICA_ID=replica10
