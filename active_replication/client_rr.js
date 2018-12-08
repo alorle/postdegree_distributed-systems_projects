@@ -78,6 +78,8 @@ function onRequest(message, from_timeout = false) {
     to: handler_id,
     type: 'request',
     id: current_request_id,
+    client_id: client_id,
+    client_seq: request_counter,
     data: message,
     trace: {
       [`input_${client_id}`]: new Date().valueOf(),

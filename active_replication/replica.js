@@ -44,8 +44,34 @@ function onTORequest(senderId, req) {
     // Si es la primera vez que ve la petición, almacenarla en el mapa de peticiones
     console.log(`Message '${req.id}' stored in requests map`);
     req.trace[`input_${identity}`] = new Date().valueOf();
+
+    // Comprobamos si tenemos una petición anterior del cliente
+    var mapIter = requests_map.entries();
+    var notFounded = true;
+
+    while (notFounded) {
+      var map = mapIter.next().value;
+      console.log(map);
+
+      if (map != undefined) {
+        console.log(map[1].client_seq);
+        console.log(req.client_seq);
+        if (map[1].client_id == req.client_id && map[1].client_seq < req.client_seq) {
+          // Borramos la vieja
+          requests_map.delete(map[0]);
+          notFounded = false;
+        }
+      }
+      else
+        notFounded = false;
+    }
+
     requests_map.set(req.seq, req);
-  } else {
+
+    console.log('Listado de peticiones en las réplicas:');
+    console.log(requests_map);
+  }
+  else {
     console.log(`Message '${req.id}' already in requests map`);
     const stored_req = requests_map.get(req.seq);
 
