@@ -131,11 +131,8 @@ function onTOReplay(senderId, rep) {
 function onTOCast(to_request) {
   to_request.trace[`input_${identity}`] = new Date().valueOf();
 
-  var index = requests.findIndex(function (element) {
-    return element.client_id === to_request.client_id;
-  });
+  let index = requests.findIndex((req) => req.client_id === to_request.client_id);
 
-  console.log('index: ' + index);
   if (index == -1) {
     // Si no tenemos guardado el cliente, lo guardamos
     requests.push(to_request);
@@ -143,8 +140,7 @@ function onTOCast(to_request) {
     if (to_request.to == identity) {
       attendPendingRequests(to_request.seq);
     }
-  }
-  else {
+  } else {
     // Tenemos el cliente, comprobamos su número de secuencia
     if (to_request.client_seq > requests[index].client_seq) {
       // El nuevo número de secuencia es mayor al que tenemos, lo actualizamos
@@ -156,7 +152,6 @@ function onTOCast(to_request) {
     }
     // Si es menor, el handler tiene la capacidad de ignorar la solicitud.
   }
-  console.log(requests);
 }
 
 /**

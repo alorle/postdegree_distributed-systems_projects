@@ -47,9 +47,9 @@ function onTORequest(senderId, req) {
 
     // Comprobamos si tenemos una petición anterior del cliente
     var mapIter = requests_map.entries();
-    var notFounded = true;
+    var notFound = true;
 
-    while (notFounded) {
+    while (notFound) {
       var map = mapIter.next().value;
       console.log(map);
 
@@ -59,11 +59,11 @@ function onTORequest(senderId, req) {
         if (map[1].client_id == req.client_id && map[1].client_seq < req.client_seq) {
           // Borramos la vieja
           requests_map.delete(map[0]);
-          notFounded = false;
+          notFound = false;
         }
       }
       else
-        notFounded = false;
+        notFound = false;
     }
 
     requests_map.set(req.seq, req);
