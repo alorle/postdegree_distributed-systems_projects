@@ -85,10 +85,14 @@ function onRequest(senderId, req) {
 }
 
 function attendPendingRequests(seq) {
-  console.log(`¿¿${seq} > ${last_served_request}??`);
+  console.log(`${LOG_TAG} - CACHE size: ${requests.length}`);
+  console.log(`${LOG_TAG} - ¿¿${seq} > ${last_served_request}??`);
   if (seq > last_served_request) {
     for (let i = last_served_request + 1; i <= seq; i++) {
       const pending = { ...getReq(i) };
+      if (pending.id == undefined || pending.id === null) {
+        continue;
+      }
       pending.from = identity;
 
       console.log(`Message '${pending.id}' recieved from '${pending.from}' of type '${pending.type}': ${pending.data}. Sending to all replicas`);

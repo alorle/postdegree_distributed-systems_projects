@@ -45,31 +45,34 @@ function onTORequest(senderId, req) {
     console.log(`Message '${req.id}' stored in requests map`);
     req.trace[`input_${identity}`] = new Date().valueOf();
 
-    // Comprobamos si tenemos una petición anterior del cliente
-    var mapIter = requests_map.entries();
-    var notFound = true;
-
-    while (notFound) {
-      var map = mapIter.next().value;
-      console.log(map);
-
-      if (map != undefined) {
-        console.log(map[1].client_seq);
-        console.log(req.client_seq);
-        if (map[1].client_id == req.client_id && map[1].client_seq < req.client_seq) {
-          // Borramos la vieja
-          requests_map.delete(map[0]);
-          notFound = false;
-        }
+    let toDelete = [];
+    requests_map.forEach((value, key) => {
+      if (value.client_id === req.client_id && value.client_seq < req.client_seq) {
+        toDelete.push(key);
       }
-      else
-        notFound = false;
-    }
+    });
+    toDelete.forEach((key) => requests_map.delete(key));
+
+    // // Comprobamos si tenemos una petición anterior del cliente
+    // var mapIter = requests_map.entries();
+    // var notFound = true;
+
+    // while (notFound) {
+    //   var map = mapIter.next().value;
+    //   if (map != undefined) {
+    //     if (map[1].client_id == req.client_id && map[1].client_seq < req.client_seq) {
+    //       // Borramos la vieja
+    //       requests_map.delete(map[0]);
+    //       notFound = false;
+    //     }
+    //   }
+    //   else
+    //     notFound = false;
+    // }
 
     requests_map.set(req.seq, req);
 
-    console.log('Listado de peticiones en las réplicas:');
-    console.log(requests_map);
+    console.log(`${LOG_TAG} - CACHE size: ${requests_map.size}`);
   }
   else {
     console.log(`Message '${req.id}' already in requests map`);
@@ -85,14 +88,15 @@ function onTORequest(senderId, req) {
   // Procesamos todas las peticiones pendientes
   while (requests_map.has(next_request)) {
     const processing_req = requests_map.get(next_request);
+    const replay_data = processing_req.data.split('').reverse().join('');
 
-    console.log(`Processing message '${processing_req.id}'`);
+    console.log(`${Date.now().valueOf()} - Processing message '${processing_req.id}': ${processing_req.data} -> ${replay_data}`);
     processing_req.replay = {
       id: processing_req.id,
       from: identity,
       to: processing_req.from,
       type: 'replay',
-      data: processing_req.data.split('').reverse().join(''),
+      data: replay_data,
       trace: processing_req.trace
     };
 

@@ -17,7 +17,9 @@ if (CLIENT_ID == undefined || CLIENT_ID === null || CLIENT_ID.length === 0
 const identity = CLIENT_ID;
 const socket_addr = `tcp://localhost:${RR_PORT}`;
 const LOG_TAG = `CLIENT[${identity}]`;
-console.log(`Client '${identity}' will be connected to '${socket_addr}'`);
+let lastMsg;
+let lastSendTimestamp;
+// console.log(`Client '${identity}' will be connected to '${socket_addr}'`);
 
 /**
  * Connect CLIENT with RETRANSMISSION-REDIRECTION
@@ -31,16 +33,17 @@ socket.on('message', (message) => onReplay(JSON.parse(message)));
  * Process replay
  */
 function onReplay(rep) {
-  console.log(`${LOG_TAG} - Replay recieved from '${rep.from}':`, rep.data);
-  showTrace(rep.trace);
+  const lastReplayTimestamp = Date.now().valueOf();
+  console.log(`${lastMsg} ${lastSendTimestamp} ${rep.data} ${lastReplayTimestamp} ${lastReplayTimestamp - lastSendTimestamp}`);
+  // showTrace(rep.trace);
   setTimeout(send, 2000);
 }
 
-function showTrace(trace) {
-  trace = Object.keys(trace).map((key) => `${trace[key]} - ${new Date(trace[key])} -> ${key}`);
-  console.log('Trace:');
-  trace.forEach(t => console.log(` - ${t}`));
-}
+// function showTrace(trace) {
+//   trace = Object.keys(trace).map((key) => `${trace[key]} - ${new Date(trace[key])} -> ${key}`);
+//   console.log('Trace:');
+//   trace.forEach(t => console.log(` - ${t}`));
+// }
 
 function createRandomString(length) {
   let str = '';
@@ -50,7 +53,9 @@ function createRandomString(length) {
 
 function send() {
   const msg = createRandomString(20);
-  console.log(`${LOG_TAG} - Sending request:`, msg);
+  const date = Date.now();
+  lastMsg = msg;
+  lastSendTimestamp = date.valueOf();
   socket.send(msg);
 }
 
