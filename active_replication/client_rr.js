@@ -4,6 +4,7 @@ const handlers_ids = require('./elements').handlers;
 const CLIENT_ID = process.env.CLIENT_ID || process.argv[2];
 const CLIENT_PORT = process.env.CLIENT_PORT || process.argv[3];
 const HANDLERS_PORT = process.env.HANDLERS_PORT || process.argv[4];
+const INSIDE_DOCKER = process.env.INSIDE_DOCKER != undefined;
 
 if (CLIENT_ID == undefined || CLIENT_ID === null || CLIENT_ID.length === 0
   || CLIENT_PORT == undefined || CLIENT_PORT === null
@@ -20,13 +21,13 @@ let request_counter = 0;
 let current_request_id = null;
 let handler_id = null;
 let timeoutTimer = null;
-let timeoutMillis = 10000;
+let timeoutMillis = 100;
 
 const rr_host = '*';
 const rr_port = CLIENT_PORT;
 const rr_addr = `tcp://${rr_host}:${rr_port}`;
 
-const handler_router_host = 'client_router';
+const handler_router_host = (INSIDE_DOCKER) ? 'client_router' : 'localhost';
 const handler_router_port = HANDLERS_PORT;
 const handler_router_addr = `tcp://${handler_router_host}:${handler_router_port}`;
 

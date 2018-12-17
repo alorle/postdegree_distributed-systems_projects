@@ -6,6 +6,7 @@ const CLIENTS_PORT = process.env.CLIENTS_PORT || process.argv[3];
 const REPLICAS_PORT = process.env.REPLICAS_PORT || process.argv[4];
 const TO_ROUTER_PORT = process.env.TO_ROUTER_PORT || process.argv[5];
 const TO_SUBSCRIBER_PORT = process.env.RR_PORT || process.argv[6];
+const INSIDE_DOCKER = process.env.INSIDE_DOCKER != undefined;
 
 if (HANDLER_ID === undefined || HANDLER_ID == null || HANDLER_ID.length === 0
   || CLIENTS_PORT === undefined || CLIENTS_PORT == null
@@ -23,19 +24,19 @@ const identity = HANDLER_ID;
 let last_served_request = 0;
 const requests = [];
 
-const handler_router_host = 'client_router';
+const handler_router_host = (INSIDE_DOCKER) ? 'client_router' : 'localhost';
 const handler_router_port = CLIENTS_PORT;
 const handler_router_addr = `tcp://${handler_router_host}:${handler_router_port}`;
 
-const replica_router_host = 'replica_router';
+const replica_router_host = (INSIDE_DOCKER) ? 'replica_router' : 'localhost';
 const replica_router_port = REPLICAS_PORT;
 const replica_router_addr = `tcp://${replica_router_host}:${replica_router_port}`;
 
-const sequencer_router_host = 'to_sequencer';
+const sequencer_router_host = (INSIDE_DOCKER) ? 'to_sequencer' : 'localhost';
 const sequencer_router_port = TO_ROUTER_PORT;
 const sequencer_router_addr = `tcp://${sequencer_router_host}:${sequencer_router_port}`;
 
-const sequencer_subscriber_host = 'to_sequencer';
+const sequencer_subscriber_host = (INSIDE_DOCKER) ? 'to_sequencer' : 'localhost';
 const sequencer_subscriber_port = TO_SUBSCRIBER_PORT;
 const sequencer_subscriber_addr = `tcp://${sequencer_subscriber_host}:${sequencer_subscriber_port}`;
 

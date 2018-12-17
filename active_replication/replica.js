@@ -3,6 +3,7 @@ const handlers = require('./elements').handlers;
 
 const REPLICA_ID = process.env.REPLICA_ID || process.argv[2];
 const HANDLERS_PORT = process.env.HANDLERS_PORT || process.argv[3];
+const INSIDE_DOCKER = process.env.INSIDE_DOCKER != undefined;
 
 if (REPLICA_ID == undefined || REPLICA_ID === null || REPLICA_ID.length === 0
   || HANDLERS_PORT == undefined || HANDLERS_PORT === null) {
@@ -14,7 +15,7 @@ if (REPLICA_ID == undefined || REPLICA_ID === null || REPLICA_ID.length === 0
  * ESTADO DEL REPLICA
  */
 const identity = REPLICA_ID;
-const replica_router_host = 'replica_router';
+const replica_router_host = (INSIDE_DOCKER) ? 'replica_router' : 'localhost';
 const replica_router_port = HANDLERS_PORT;
 const replica_router_addr = `tcp://${replica_router_host}:${replica_router_port}`;
 
