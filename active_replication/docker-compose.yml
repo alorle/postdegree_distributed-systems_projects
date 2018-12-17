@@ -50,13 +50,13 @@ services:
       - "3003:3000"
     environment:
       - CLIENT_ID=client3
-  # client_rr4:
-  #   image: active_replication/client_rr
-  #   container_name: client_rr4
-  #   ports:
-  #     - "3004:3000"
-  #   environment:
-  #     - CLIENT_ID=client4
+  client_rr4:
+    image: active_replication/client_rr
+    container_name: client_rr4
+    ports:
+      - "3004:3000"
+    environment:
+      - CLIENT_ID=client4
   # client_rr5:
   #   image: active_replication/client_rr
   #   container_name: client_rr5

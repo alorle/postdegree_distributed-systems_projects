@@ -36,9 +36,9 @@ clean: down
 
 up: all
 	docker-compose up -d
-	docker-compose logs -f --no-color  replica1 | grep Processing > logs/replica1.log &
-	docker-compose logs -f --no-color  replica2 | grep Processing > logs/replica2.log &
-	docker-compose logs -f --no-color  replica3 | grep Processing > logs/replica3.log &
+	docker-compose logs -f --no-color replica1 | grep Processing > logs/replica1.log &
+	docker-compose logs -f --no-color replica2 | grep Processing > logs/replica2.log &
+	docker-compose logs -f --no-color replica3 | grep Processing > logs/replica3.log &
 
 client1:
 	node client.js client1 3001 2>&1 | tee logs/client1.log
@@ -48,6 +48,9 @@ client2:
 
 client3:
 	node client.js client3 3003 2>&1 | tee logs/client3.log
+
+client4:
+	node client.js client4 3004 2>&1 | tee logs/client4.log
 
 down:
 	docker-compose down
